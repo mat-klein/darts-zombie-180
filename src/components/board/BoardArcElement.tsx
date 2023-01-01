@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useHover } from 'usehooks-ts';
+import { fromPolar } from '../../utils/coordinates';
 
 type BoardArcElementProps = {
   startAngle: number;
@@ -16,16 +17,6 @@ const BoardArcElement = ({
   color,
   onTrigger,
 }: BoardArcElementProps) => {
-  function fromPolar(
-    angle: number,
-    radius: number
-  ): [number, number] {
-    return [
-      Math.sin((angle / 180) * Math.PI) * radius,
-      -Math.cos((angle / 180) * Math.PI) * radius,
-    ];
-  }
-
   function toSvgPtString(pt: [number, number]) {
     return pt[0] + ' ' + pt[1];
   }
@@ -39,17 +30,14 @@ const BoardArcElement = ({
   const ref = useRef<any>();
 
   const onActivate = () => {
-    console.log('board-element:activate');
     setActive(true);
   };
 
   const onDeactivate = () => {
-    console.log('board-element:deactivate');
     setActive(false);
   };
 
   const onTriggerElement = () => {
-    console.log('board-element:trigger');
     setActive(false);
     onTrigger?.();
   };
