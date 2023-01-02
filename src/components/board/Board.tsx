@@ -18,26 +18,39 @@ import {
   vectorDiff,
   vectorMultiply,
 } from '../../utils/coordinates';
-import { SlicePart, boardSliceNumbers } from '../../utils/darts';
+import {
+  DartHit,
+  SlicePart,
+  boardSliceNumbers,
+} from '../../utils/darts';
 import { zoomOnPoint } from '../../utils/zoom';
 import { Color, newColor } from '../../utils/colors';
+import DartScoreLabel from '../game/DartScoreLabel';
 
 type BoardProps = {
   initialZoom: number;
   initialPosition: Vector2;
   overlayColors?: Record<number, Partial<Record<SlicePart, Color>>>;
-  onActivate?: () => void;
-  onDeactivate?: () => void;
-  onTrigger?: (number: number, part: SlicePart) => void;
+  bigHitDisplay?: { isShadow?: boolean } & DartHit;
+  onStartSelection?: () => void;
+  onStopSelection?: () => void;
+  onActivateElement?: (number: number, part: SlicePart) => void;
+  onDeactivateElement?: (number: number, part: SlicePart) => void;
+  onTriggerElement?: (number: number, part: SlicePart) => void;
+  onScreenViewReset?: () => void;
 };
 
 const Board = ({
   initialZoom,
   initialPosition,
   overlayColors,
-  onTrigger,
-  onActivate,
-  onDeactivate,
+  bigHitDisplay,
+  onActivateElement,
+  onDeactivateElement,
+  onTriggerElement,
+  onStartSelection,
+  onStopSelection,
+  onScreenViewReset,
 }: BoardProps) => {
   const ref20 = useRef(null);
   const isHover20 = useHover(ref20);
@@ -53,6 +66,11 @@ const Board = ({
     ...initialPosition,
     initialZoom,
   ]);
+
+  const [showBigHit, setShowBigHit] = useState<DartHit | undefined>(
+    undefined
+  );
+
   useEffect(() => {
     setScreenView([...initialPosition, initialZoom]);
   }, [initialPosition, initialZoom]);
@@ -96,6 +114,7 @@ const Board = ({
 
         setScreenView((screenView) => {
           if (resetInterpolate === 0) {
+            onScreenViewReset?.();
             return [...initialPosition, initialZoom];
           }
 
@@ -152,16 +171,15 @@ const Board = ({
   }
 
   function forwardTouchStartToElements(touch: Touch) {
-    const elem = document.elementFromPoint(
-      touch.clientX,
-      touch.clientY
-    );
+    const elem = document
+      .elementsFromPoint(touch.clientX, touch.clientY)
+      .find((elem) => elem.classList.contains('board-element'));
     if (elem !== currentActiveElement) {
       if (currentActiveElement) {
         const event = new Event('board-element:deactivate');
         currentActiveElement?.dispatchEvent(event);
       } else {
-        onActivate?.();
+        onStartSelection?.();
       }
       setCurrentActiveElement(elem);
       const event = new Event('board-element:activate');
@@ -170,10 +188,9 @@ const Board = ({
   }
 
   function forwardTouchMoveToElements(touch: Touch) {
-    const elem = document.elementFromPoint(
-      touch.clientX,
-      touch.clientY
-    );
+    const elem = document
+      .elementsFromPoint(touch.clientX, touch.clientY)
+      .find((elem) => elem.classList.contains('board-element'));
     if (elem !== currentActiveElement) {
       if (currentActiveElement) {
         const event = new Event('board-element:deactivate');
@@ -247,6 +264,8 @@ const Board = ({
       const event = new Event('board-element:trigger');
       currentActiveElement?.dispatchEvent(event);
       setCurrentActiveElement(null);
+    } else {
+      onStopSelection?.();
     }
   }
 
@@ -256,7 +275,7 @@ const Board = ({
       currentActiveElement?.dispatchEvent(event);
       setCurrentActiveElement(null);
     }
-    onDeactivate?.();
+    onStopSelection?.();
   }
 
   function onTouchStart(e: TouchEvent) {
@@ -268,8 +287,8 @@ const Board = ({
     cancelZoomInterval();
     const touch = e.targetTouches[0];
     setTouchIdentifier(touch.identifier);
-    forwardTouchStartToElements(touch);
 
+    forwardTouchStartToElements(touch);
     startTouchZoom([
       touch.clientX - windowW2,
       touch.clientY - windowH2,
@@ -311,71 +330,109 @@ const Board = ({
   }
 
   return (
-    <svg
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="-200 -200 400 400"
+    <div
       style={{
-        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
       }}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
     >
-      <style>
-        {`
+      <svg
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="-200 -200 400 400"
+        style={{
+          flex: 1,
+        }}
+      >
+        <style>
+          {`
         @font-face {
           font-family: 'Kumar One';
           font-style: normal;
           font-weight: 400;
           src: local('Kumar One'), 
-               url('/darts-zombie-180/assets/KumarOne-Regular.ttf') format('woff');
+          url('/darts-zombie-180/assets/KumarOne-Regular.ttf') format('woff');
         }
         
-      .board-number {
-        text-align: center;
-        fill: white;
-        font-family: 'Kumar One';
-        font-size: 26px;
-      }
+        .board-number {
+          text-align: center;
+          fill: white;
+          font-family: 'Kumar One';
+          font-size: 26px;
+        }
         `}
-      </style>
-      <g
-        style={{
-          transform: `scale(${
-            screenView[2]
-          }) translate(${-screenView[0]}px, ${-screenView[1]}px)`,
-        }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onTouchCancel={onTouchCancel}
-      >
-        <BoardCircleElement
-          radius={181.5}
-          color={newColor(0, 0, 0, 1)}
-        />
-        <BoardCircleElement
-          radius={181.5}
-          color={newColor(0, 0, 0, 1)}
-          overlayColor={overlayColors?.[0]?.none}
-          onTrigger={() => onTrigger?.(0, 'none')}
-        />
-        {boardSliceNumbers.map((number, inx) => (
-          <BoardSlice
-            key={number}
-            number={number}
-            angle={18 * inx}
-            darkSlice={inx % 2 === 0}
-            overlayColors={overlayColors?.[number]}
-            onTrigger={onTrigger}
+        </style>
+        <g
+          style={{
+            transform: `scale(${
+              screenView[2]
+            }) translate(${-screenView[0]}px, ${-screenView[1]}px)`,
+          }}
+        >
+          <BoardCircleElement
+            radius={181.5}
+            color={newColor(0, 0, 0, 1)}
           />
-        ))}
-        <BoardBull
-          innerRadius={8}
-          outerRadius={20}
-          overlayColors={overlayColors?.[25]}
-          onTrigger={onTrigger}
+          <BoardCircleElement
+            radius={181.5}
+            color={newColor(0, 0, 0, 1)}
+            overlayColor={overlayColors?.[0]?.none}
+            onActivate={() => onActivateElement?.(0, 'none')}
+            onDeactivate={() => onDeactivateElement?.(0, 'none')}
+            onTrigger={() => onTriggerElement?.(0, 'none')}
+          />
+          {boardSliceNumbers.map((number, inx) => (
+            <BoardSlice
+              key={number}
+              number={number}
+              angle={18 * inx}
+              darkSlice={inx % 2 === 0}
+              overlayColors={overlayColors?.[number]}
+              onActivate={onActivateElement}
+              onDeactivate={onDeactivateElement}
+              onTrigger={onTriggerElement}
+            />
+          ))}
+          <BoardBull
+            innerRadius={8}
+            outerRadius={20}
+            overlayColors={overlayColors?.[25]}
+            onActivate={onActivateElement}
+            onDeactivate={onDeactivateElement}
+            onTrigger={onTriggerElement}
+          />
+        </g>
+      </svg>
+      <div
+        style={{
+          display: bigHitDisplay ? 'block' : 'none',
+          position: 'absolute',
+          top: '44%',
+          left: '50%',
+          marginLeft: '-84px',
+          marginTop: '-52px',
+        }}
+      >
+        <DartScoreLabel
+          hit={
+            bigHitDisplay ||
+            ({ number: 0, slicePart: 'none' } as DartHit)
+          }
+          big
+          shadow={bigHitDisplay?.isShadow}
         />
-      </g>
-    </svg>
+      </div>
+    </div>
   );
 };
 

@@ -19,6 +19,10 @@ type DartHitHistoryItem = {
   round: number;
 } & DartHit;
 
+type BigHitDartDisplay = {
+  isShadow?: boolean;
+} & DartHit;
+
 const dartsPerRound = 3;
 
 function App() {
@@ -26,6 +30,9 @@ function App() {
   const [hits, setHits] = useState<DartHitHistoryItem[]>([]);
   const [boardActive, setBoardActive] = useState(false);
   const [boardZoom, setBoardZoom] = useState(false);
+  const [showBigHit, setShowBigHit] = useState<
+    BigHitDartDisplay | undefined
+  >(undefined);
   const [showDistribution, setShowDistribution] = useState(false);
   const [isUndoPressed, setIsUndoPressed] = useState(false);
   const initialBoardPosition: Vector2 = useMemo(
@@ -35,6 +42,8 @@ function App() {
   const initialBoardZoom = boardZoom ? 3 : 1.3;
 
   const boardTrigger = (number: number, slicePart: SlicePart) => {
+    const newHit = { number, slicePart };
+    setShowBigHit(newHit);
     setBoardActive(false);
     setHits((hits) => {
       const lastDartRound =
@@ -45,8 +54,7 @@ function App() {
       return [
         ...hits,
         {
-          number,
-          slicePart,
+          ...newHit,
           score:
             number *
             (slicePart === 'triple'
@@ -145,9 +153,6 @@ function App() {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'stretch',
         position: 'fixed',
         top: 0,
         left: 0,
@@ -159,9 +164,24 @@ function App() {
         initialPosition={initialBoardPosition}
         initialZoom={initialBoardZoom}
         overlayColors={overlayColors}
-        onActivate={() => setBoardActive(true)}
-        onDeactivate={() => setBoardActive(false)}
-        onTrigger={boardTrigger}
+        bigHitDisplay={showBigHit}
+        onStartSelection={() => {
+          setBoardActive(true);
+          setShowBigHit(undefined);
+        }}
+        onStopSelection={() => setBoardActive(false)}
+        onActivateElement={(number: number, part: SlicePart) =>
+          setShowBigHit({ number, slicePart: part, isShadow: true })
+        }
+        onDeactivateElement={(number: number, part: SlicePart) =>
+          setShowBigHit(undefined)
+        }
+        onTriggerElement={boardTrigger}
+        onScreenViewReset={() =>
+          setTimeout(() => {
+            setShowBigHit(undefined);
+          }, 250)
+        }
       />
       <div
         style={{

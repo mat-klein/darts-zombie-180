@@ -14,6 +14,8 @@ type BoardArcElementProps = {
   outerRadius: number;
   color: Color;
   overlayColor?: Color;
+  onActivate?: () => void;
+  onDeactivate?: () => void;
   onTrigger?: () => void;
 };
 
@@ -23,6 +25,8 @@ const BoardArcElement = ({
   outerRadius,
   color,
   overlayColor,
+  onActivate,
+  onDeactivate,
   onTrigger,
 }: BoardArcElementProps) => {
   function toSvgPtString(pt: [number, number]) {
@@ -45,12 +49,14 @@ const BoardArcElement = ({
 
   const fillColor = colorToString(colorMultiply(color, oCol));
 
-  const onActivate = () => {
+  const onActivateElement = () => {
     setActive(true);
+    onActivate?.();
   };
 
-  const onDeactivate = () => {
+  const onDeactivateElement = () => {
     setActive(false);
+    onDeactivate?.();
   };
 
   const onTriggerElement = () => {
@@ -61,11 +67,11 @@ const BoardArcElement = ({
   useEffect(() => {
     ref.current.addEventListener(
       'board-element:activate',
-      onActivate
+      onActivateElement
     );
     ref.current.addEventListener(
       'board-element:deactivate',
-      onDeactivate
+      onDeactivateElement
     );
     ref.current.addEventListener(
       'board-element:trigger',
@@ -75,11 +81,11 @@ const BoardArcElement = ({
     return () => {
       ref.current.removeEventListener(
         'board-element:activate',
-        onActivate
+        onActivateElement
       );
       ref.current.removeEventListener(
         'board-element:deactivate',
-        onDeactivate
+        onDeactivateElement
       );
       ref.current.removeEventListener(
         'board-element:trigger',
@@ -90,6 +96,7 @@ const BoardArcElement = ({
 
   return (
     <path
+      className="board-element"
       ref={ref}
       onTouchStart={(e) => {
         //setActive(true);

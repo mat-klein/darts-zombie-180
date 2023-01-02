@@ -10,6 +10,8 @@ type BoardCircleElementProps = {
   radius: number;
   color: Color;
   overlayColor?: Color;
+  onActivate?: () => void;
+  onDeactivate?: () => void;
   onTrigger?: () => void;
 };
 
@@ -17,6 +19,8 @@ const BoardCircleElement = ({
   radius,
   color,
   overlayColor,
+  onActivate,
+  onDeactivate,
   onTrigger,
 }: BoardCircleElementProps) => {
   const [active, setActive] = useState(false);
@@ -29,12 +33,14 @@ const BoardCircleElement = ({
     : newColor(0, 0, 0, 0);
   const fillColor = colorToString(colorMultiply(color, oCol));
 
-  const onActivate = () => {
+  const onActivateElement = () => {
     setActive(true);
+    onActivate?.();
   };
 
-  const onDeactivate = () => {
+  const onDeactivateElement = () => {
     setActive(false);
+    onDeactivate?.();
   };
 
   const onTriggerElement = () => {
@@ -45,11 +51,11 @@ const BoardCircleElement = ({
   useEffect(() => {
     ref.current.addEventListener(
       'board-element:activate',
-      onActivate
+      onActivateElement
     );
     ref.current.addEventListener(
       'board-element:deactivate',
-      onDeactivate
+      onDeactivateElement
     );
     ref.current.addEventListener(
       'board-element:trigger',
@@ -59,11 +65,11 @@ const BoardCircleElement = ({
     return () => {
       ref.current.removeEventListener(
         'board-element:activate',
-        onActivate
+        onActivateElement
       );
       ref.current.removeEventListener(
         'board-element:deactivate',
-        onDeactivate
+        onDeactivateElement
       );
       ref.current.removeEventListener(
         'board-element:trigger',
@@ -81,6 +87,7 @@ const BoardCircleElement = ({
       fill={fillColor}
       strokeWidth={0.1}
       stroke={'black'}
+      className="board-element"
     />
   );
 };

@@ -9,6 +9,8 @@ type BoardSliceProps = {
   angle: number;
   darkSlice: boolean;
   overlayColors?: Partial<Record<SlicePart, Color>>;
+  onActivate?: (number: number, part: SlicePart) => void;
+  onDeactivate?: (number: number, part: SlicePart) => void;
   onTrigger?: (number: number, part: SlicePart) => void;
 };
 
@@ -17,6 +19,8 @@ const BoardSlice = ({
   angle,
   darkSlice,
   overlayColors,
+  onActivate,
+  onDeactivate,
   onTrigger,
 }: BoardSliceProps) => {
   const doubleColor = darkSlice
@@ -34,6 +38,8 @@ const BoardSlice = ({
         outerRadius={60}
         color={singleColor}
         overlayColor={overlayColors?.['inner']}
+        onActivate={() => onActivate?.(number, 'inner')}
+        onDeactivate={() => onDeactivate?.(number, 'inner')}
         onTrigger={() => onTrigger?.(number, 'inner')}
       />
       <BoardArcElement
@@ -42,6 +48,8 @@ const BoardSlice = ({
         outerRadius={75}
         color={doubleColor}
         overlayColor={overlayColors?.['triple']}
+        onActivate={() => onActivate?.(number, 'triple')}
+        onDeactivate={() => onDeactivate?.(number, 'triple')}
         onTrigger={() => onTrigger?.(number, 'triple')}
       />
       <BoardArcElement
@@ -50,6 +58,8 @@ const BoardSlice = ({
         outerRadius={110}
         color={singleColor}
         overlayColor={overlayColors?.['outer']}
+        onActivate={() => onActivate?.(number, 'outer')}
+        onDeactivate={() => onDeactivate?.(number, 'outer')}
         onTrigger={() => onTrigger?.(number, 'outer')}
       />
       <BoardArcElement
@@ -58,6 +68,8 @@ const BoardSlice = ({
         outerRadius={127}
         color={doubleColor}
         overlayColor={overlayColors?.['double']}
+        onActivate={() => onActivate?.(number, 'double')}
+        onDeactivate={() => onDeactivate?.(number, 'double')}
         onTrigger={() => onTrigger?.(number, 'double')}
       />
       <text
