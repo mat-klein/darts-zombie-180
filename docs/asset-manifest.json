@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/static/css/main.073c9b0a.css",
-    "main.js": "/static/js/main.86ab1c1b.js",
-    "static/js/787.cc7b0d69.chunk.js": "/static/js/787.cc7b0d69.chunk.js",
-    "index.html": "/index.html",
-    "main.073c9b0a.css.map": "/static/css/main.073c9b0a.css.map",
-    "main.86ab1c1b.js.map": "/static/js/main.86ab1c1b.js.map",
-    "787.cc7b0d69.chunk.js.map": "/static/js/787.cc7b0d69.chunk.js.map"
+    "main.css": "/darts-zombie-180/static/css/main.cdfcfc61.css",
+    "main.js": "/darts-zombie-180/static/js/main.c7385fe1.js",
+    "static/js/787.cc7b0d69.chunk.js": "/darts-zombie-180/static/js/787.cc7b0d69.chunk.js",
+    "index.html": "/darts-zombie-180/index.html",
+    "main.cdfcfc61.css.map": "/darts-zombie-180/static/css/main.cdfcfc61.css.map",
+    "main.c7385fe1.js.map": "/darts-zombie-180/static/js/main.c7385fe1.js.map",
+    "787.cc7b0d69.chunk.js.map": "/darts-zombie-180/static/js/787.cc7b0d69.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.073c9b0a.css",
-    "static/js/main.86ab1c1b.js"
+    "static/css/main.cdfcfc61.css",
+    "static/js/main.c7385fe1.js"
   ]
 }
