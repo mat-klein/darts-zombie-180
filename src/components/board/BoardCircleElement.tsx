@@ -1,18 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
+import {
+  Color,
+  colorMultiply,
+  colorToString,
+  newColor,
+} from '../../utils/colors';
 
 type BoardCircleElementProps = {
   radius: number;
-  color: string;
+  color: Color;
+  overlayColor?: Color;
   onTrigger?: () => void;
 };
 
 const BoardCircleElement = ({
   radius,
   color,
+  overlayColor,
   onTrigger,
 }: BoardCircleElementProps) => {
   const [active, setActive] = useState(false);
   const ref = useRef<any>();
+
+  const oCol = active
+    ? newColor(255, 255, 0)
+    : overlayColor
+    ? overlayColor
+    : newColor(0, 0, 0, 0);
+  const fillColor = colorToString(colorMultiply(color, oCol));
 
   const onActivate = () => {
     setActive(true);
@@ -63,7 +78,9 @@ const BoardCircleElement = ({
       cx="0"
       cy="0"
       r={radius}
-      fill={active ? 'yellow' : color}
+      fill={fillColor}
+      strokeWidth={0.1}
+      stroke={'black'}
     />
   );
 };

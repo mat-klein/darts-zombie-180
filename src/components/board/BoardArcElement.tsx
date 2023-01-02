@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { useHover } from 'usehooks-ts';
 import { fromPolar } from '../../utils/coordinates';
+import {
+  Color,
+  colorMultiply,
+  colorToString,
+  newColor,
+} from '../../utils/colors';
 
 type BoardArcElementProps = {
   startAngle: number;
   innerRadius: number;
   outerRadius: number;
-  color: string;
+  color: Color;
+  overlayColor?: Color;
   onTrigger?: () => void;
 };
 
@@ -15,6 +22,7 @@ const BoardArcElement = ({
   innerRadius,
   outerRadius,
   color,
+  overlayColor,
   onTrigger,
 }: BoardArcElementProps) => {
   function toSvgPtString(pt: [number, number]) {
@@ -28,6 +36,14 @@ const BoardArcElement = ({
 
   const [active, setActive] = useState(false);
   const ref = useRef<any>();
+
+  const oCol = active
+    ? newColor(255, 255, 0)
+    : overlayColor
+    ? overlayColor
+    : newColor(0, 0, 0, 0);
+
+  const fillColor = colorToString(colorMultiply(color, oCol));
 
   const onActivate = () => {
     setActive(true);
@@ -91,7 +107,9 @@ const BoardArcElement = ({
         }
       }}
       d={`M${p1}L${p2}L${p3}L${p4}L${p1}Z`}
-      fill={active ? 'yellow' : color}
+      fill={fillColor}
+      strokeWidth={0.07}
+      stroke={'black'}
     />
   );
 };

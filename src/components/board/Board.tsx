@@ -20,10 +20,12 @@ import {
 } from '../../utils/coordinates';
 import { SlicePart, boardSliceNumbers } from '../../utils/darts';
 import { zoomOnPoint } from '../../utils/zoom';
+import { Color, newColor } from '../../utils/colors';
 
 type BoardProps = {
   initialZoom: number;
   initialPosition: Vector2;
+  overlayColors?: Record<number, Partial<Record<SlicePart, Color>>>;
   onActivate?: () => void;
   onTrigger?: (number: number, part: SlicePart) => void;
 };
@@ -31,6 +33,7 @@ type BoardProps = {
 const Board = ({
   initialZoom,
   initialPosition,
+  overlayColors,
   onTrigger,
   onActivate,
 }: BoardProps) => {
@@ -253,6 +256,22 @@ const Board = ({
     }
   }
 
+  function onTouchCancel() {
+    setCancelInterval((cancelInterval) => {
+      if (cancelInterval) {
+        window.clearInterval(cancelInterval);
+      }
+      return null;
+    });
+    setCenterVelocity([0, 0]);
+    resetScreenView();
+    if (currentActiveElement) {
+      const event = new Event('board-element:deactivate');
+      currentActiveElement?.dispatchEvent(event);
+      setCurrentActiveElement(null);
+    }
+  }
+
   return (
     <svg
       fill="none"
@@ -289,10 +308,16 @@ const Board = ({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchCancel}
       >
         <BoardCircleElement
           radius={181.5}
-          color="black"
+          color={newColor(0, 0, 0, 1)}
+        />
+        <BoardCircleElement
+          radius={181.5}
+          color={newColor(0, 0, 0, 1)}
+          overlayColor={overlayColors?.[0]?.none}
           onTrigger={() => onTrigger?.(0, 'none')}
         />
         {boardSliceNumbers.map((number, inx) => (
@@ -301,12 +326,14 @@ const Board = ({
             number={number}
             angle={18 * inx}
             darkSlice={inx % 2 === 0}
+            overlayColors={overlayColors?.[number]}
             onTrigger={onTrigger}
           />
         ))}
         <BoardBull
           innerRadius={8}
           outerRadius={20}
+          overlayColors={overlayColors?.[25]}
           onTrigger={onTrigger}
         />
       </g>
