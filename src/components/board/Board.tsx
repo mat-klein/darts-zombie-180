@@ -326,7 +326,7 @@ const Board = ({
           font-style: normal;
           font-weight: 400;
           src: local('Kumar One'), 
-               url('/assets/KumarOne-Regular.ttf') format('woff');
+               url('/darts-zombie-180/assets/KumarOne-Regular.ttf') format('woff');
         }
         
       .board-number {
