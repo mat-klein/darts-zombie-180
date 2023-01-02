@@ -27,6 +27,7 @@ type BoardProps = {
   initialPosition: Vector2;
   overlayColors?: Record<number, Partial<Record<SlicePart, Color>>>;
   onActivate?: () => void;
+  onDeactivate?: () => void;
   onTrigger?: (number: number, part: SlicePart) => void;
 };
 
@@ -36,6 +37,7 @@ const Board = ({
   overlayColors,
   onTrigger,
   onActivate,
+  onDeactivate,
 }: BoardProps) => {
   const ref20 = useRef(null);
   const isHover20 = useHover(ref20);
@@ -63,27 +65,40 @@ const Board = ({
   const [cancelInterval, setCancelInterval] = useState<number | null>(
     null
   );
+  const [touchIdentifier, setTouchIdentifier] = useState<
+    number | null
+  >(null);
 
   /**
    * animate resetting the zoom & center to initial values
    */
   function resetScreenView() {
+    setCenterVelocity([0, 0]);
     let oldScreenView = [...screenView];
     setScreenView((screenView) => {
       oldScreenView = screenView;
       return screenView;
     });
 
-    const interpolationStep = 0.05;
+    const interpolationStep = 0.08;
     let resetInterpolate = 1.0;
     const resetInterval = window.setInterval(() => {
       const interpolateZoom = Math.pow(resetInterpolate, 1);
 
       resetInterpolate -= interpolationStep;
+      if (resetInterpolate <= 0) {
+        resetInterpolate = 0;
+        window.clearInterval(resetInterval);
+      }
+
       setTouchCenter((touchCenter) => {
         if (!touchCenter) return touchCenter;
 
         setScreenView((screenView) => {
+          if (resetInterpolate === 0) {
+            return [...initialPosition, initialZoom];
+          }
+
           const finalCSZoomOnly = zoomOnPoint(
             screenView,
             touchCenter,
@@ -93,13 +108,10 @@ const Board = ({
             initialPosition,
             csCenter(finalCSZoomOnly)
           );
-          const moveCSStep =
-            resetInterpolate === 0
-              ? offsetCS
-              : vectorMultiply(
-                  offsetCS,
-                  interpolationStep / resetInterpolate
-                );
+          const moveCSStep = vectorMultiply(
+            offsetCS,
+            interpolationStep / resetInterpolate
+          );
           const newScale =
             oldScreenView[2] * interpolateZoom +
             initialZoom * (1 - interpolateZoom);
@@ -114,11 +126,6 @@ const Board = ({
 
         return touchCenter;
       });
-
-      if (resetInterpolate <= 0) {
-        resetInterpolate = 0;
-        window.clearInterval(resetInterval);
-      }
     }, intervalMs);
   }
 
@@ -219,8 +226,48 @@ const Board = ({
     );
   }
 
+  function cancelZoomInterval() {
+    setCancelInterval((cancelInterval) => {
+      if (cancelInterval) {
+        window.clearInterval(cancelInterval);
+      }
+      return null;
+    });
+  }
+
+  function abortZoomSelection() {
+    cancelZoomInterval();
+    setTouchIdentifier(null);
+    deactivateCurrentElement();
+    resetScreenView();
+  }
+
+  function triggerCurrentElement() {
+    if (currentActiveElement) {
+      const event = new Event('board-element:trigger');
+      currentActiveElement?.dispatchEvent(event);
+      setCurrentActiveElement(null);
+    }
+  }
+
+  function deactivateCurrentElement() {
+    if (currentActiveElement) {
+      const event = new Event('board-element:deactivate');
+      currentActiveElement?.dispatchEvent(event);
+      setCurrentActiveElement(null);
+    }
+    onDeactivate?.();
+  }
+
   function onTouchStart(e: TouchEvent) {
+    if (e.touches.length > 1) {
+      abortZoomSelection();
+      return;
+    }
+
+    cancelZoomInterval();
     const touch = e.targetTouches[0];
+    setTouchIdentifier(touch.identifier);
     forwardTouchStartToElements(touch);
 
     startTouchZoom([
@@ -231,6 +278,9 @@ const Board = ({
 
   function onTouchMove(e: TouchEvent) {
     const touch = e.targetTouches[0];
+    if (touchIdentifier !== touch.identifier) {
+      return;
+    }
 
     forwardTouchMoveToElements(touch);
 
@@ -240,36 +290,24 @@ const Board = ({
     ]);
   }
 
-  function onTouchEnd() {
-    setCancelInterval((cancelInterval) => {
-      if (cancelInterval) {
-        window.clearInterval(cancelInterval);
-      }
-      return null;
-    });
-    setCenterVelocity([0, 0]);
-    resetScreenView();
-    if (currentActiveElement) {
-      const event = new Event('board-element:trigger');
-      currentActiveElement?.dispatchEvent(event);
-      setCurrentActiveElement(null);
+  function onTouchEnd(e: TouchEvent) {
+    const touch = e.changedTouches[0];
+    if (touchIdentifier !== touch.identifier) {
+      return;
     }
+    cancelZoomInterval();
+    resetScreenView();
+    triggerCurrentElement();
   }
 
-  function onTouchCancel() {
-    setCancelInterval((cancelInterval) => {
-      if (cancelInterval) {
-        window.clearInterval(cancelInterval);
-      }
-      return null;
-    });
-    setCenterVelocity([0, 0]);
-    resetScreenView();
-    if (currentActiveElement) {
-      const event = new Event('board-element:deactivate');
-      currentActiveElement?.dispatchEvent(event);
-      setCurrentActiveElement(null);
+  function onTouchCancel(e: TouchEvent) {
+    const touch = e.changedTouches[0];
+    if (touchIdentifier !== touch.identifier) {
+      return;
     }
+    cancelZoomInterval();
+    deactivateCurrentElement();
+    resetScreenView();
   }
 
   return (

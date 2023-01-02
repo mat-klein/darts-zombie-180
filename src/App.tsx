@@ -11,6 +11,7 @@ import {
 } from './utils/darts';
 import { Vector2 } from './utils/coordinates';
 import { Color, newColor } from './utils/colors';
+import DartScoreLabel from './components/game/DartScoreLabel';
 
 type DartHitHistoryItem = {
   score: number;
@@ -81,6 +82,7 @@ function App() {
       : dartsPerRound;
 
   type RoundStats = {
+    round: number;
     hits: DartHitHistoryItem[];
     score: number;
   };
@@ -91,12 +93,13 @@ function App() {
       return agg;
     },
     Array.from(Array(thisRound).keys()).map((inx) => ({
+      round: inx + 1,
       hits: [],
       score: 0,
     }))
   );
   const thisRoundStats = roundStats[roundStats.length - 1];
-  const lastRoundsStats = roundStats.slice(-5, -1).reverse();
+  const lastRoundsStats = roundStats.slice(0, -1).reverse();
 
   const hitColorDelta = 25;
   const fullOverlayColors: Record<
@@ -157,6 +160,7 @@ function App() {
         initialZoom={initialBoardZoom}
         overlayColors={overlayColors}
         onActivate={() => setBoardActive(true)}
+        onDeactivate={() => setBoardActive(false)}
         onTrigger={boardTrigger}
       />
       <div
@@ -205,11 +209,19 @@ function App() {
             alignItems: 'center',
           }}
         >
-          <p style={{ margin: 0 }}>
-            {thisRoundStats.hits
-              .map((hit) => dartHitShortString(hit))
-              .join(' ')}
-          </p>
+          <div
+            style={{
+              paddingTop: 8,
+              margin: 0,
+              display: 'flex',
+              flexDirection: 'row',
+              gap: 8,
+            }}
+          >
+            {thisRoundStats.hits.map((hit, inx) => (
+              <DartScoreLabel key={inx} hit={hit} />
+            ))}
+          </div>
           {thisRound >= 2 && (
             <p style={{ margin: 0 }}>
               Avg:
@@ -225,26 +237,57 @@ function App() {
       </div>
       <div
         style={{
+          display: boardActive ? 'none' : 'flex',
+          flexDirection: 'row',
           position: 'absolute',
           bottom: 32,
           left: 8,
           right: 8,
-          height: 120,
+          height: 148,
           backgroundColor: 'rgba(220,220,220,0.6)',
           borderRadius: 8,
-          padding: 12,
-          display: boardActive ? 'none' : undefined,
+          padding: 0,
         }}
       >
-        {lastRoundsStats.map((roundStats, inx) => (
-          <p key={inx} style={{ margin: 0 }}>
-            Player X:{' '}
-            {roundStats.hits
-              .map((hit) => dartHitShortString(hit))
-              .join(' ')}{' '}
-            score {roundStats.score}
-          </p>
-        ))}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'start',
+            gap: 8,
+            overflowY: 'auto',
+            padding: 8,
+          }}
+        >
+          {lastRoundsStats.map((roundStats, inx) => (
+            <div
+              key={roundStats.round}
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: 4,
+              }}
+            >
+              <div
+                style={{
+                  lineHeight: '20px',
+                }}
+              >
+                {roundStats.round}:
+              </div>
+              {roundStats.hits.map((hit, inx) => (
+                <DartScoreLabel key={inx} small hit={hit} />
+              ))}
+              <div
+                style={{
+                  lineHeight: '20px',
+                }}
+              >
+                ({roundStats.score})
+              </div>
+            </div>
+          ))}
+        </div>
         <div
           style={{
             position: 'absolute',
@@ -257,8 +300,8 @@ function App() {
             textAlign: 'center',
             boxSizing: 'border-box',
             backgroundColor: isUndoPressed
-              ? 'rgba(120,120,120,0.9)'
-              : 'rgba(180,180,180,0.9)',
+              ? 'rgba(204,204,157,0.7)'
+              : 'rgba(224,224,187,0.9)',
             borderRadius: 8,
             padding: 12,
           }}
@@ -280,8 +323,8 @@ function App() {
             textAlign: 'center',
             boxSizing: 'border-box',
             backgroundColor: boardZoom
-              ? 'rgba(210,34,34,0.9)'
-              : 'rgba(24,210,34,0.7)',
+              ? 'rgba(204,204,157,0.7)'
+              : 'rgba(224,224,187,0.9)',
             borderColor: 'black',
             borderStyle: 'solid',
             borderWidth: boardZoom ? 2 : 0,
@@ -304,8 +347,8 @@ function App() {
             textAlign: 'center',
             boxSizing: 'border-box',
             backgroundColor: showDistribution
-              ? 'rgba(210,34,34,0.9)'
-              : 'rgba(24,210,34,0.7)',
+              ? 'rgba(204,204,157,0.7)'
+              : 'rgba(224,224,187,0.9)',
             borderColor: 'black',
             borderStyle: 'solid',
             borderWidth: showDistribution ? 2 : 0,

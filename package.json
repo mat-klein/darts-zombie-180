@@ -2,6 +2,7 @@
   "name": "zombie180",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://tobiaskleine.github.io/darts-zombie-180/",
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -19,7 +20,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && rm -rf docs && mv build docs",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
