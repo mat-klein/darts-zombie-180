@@ -25,16 +25,16 @@ const BoardBull = ({
         radius={outerRadius}
         color={newColor(23, 82, 13)}
         overlayColor={overlayColors?.outer}
-        onActivate={() => onTrigger?.(25, 'outer')}
-        onDeactivate={() => onTrigger?.(25, 'outer')}
+        onActivate={() => onActivate?.(25, 'outer')}
+        onDeactivate={() => onDeactivate?.(25, 'outer')}
         onTrigger={() => onTrigger?.(25, 'outer')}
       />
       <BoardCircleElement
         radius={innerRadius}
         color={newColor(121, 8, 29)}
         overlayColor={overlayColors?.double}
-        onActivate={() => onTrigger?.(25, 'double')}
-        onDeactivate={() => onTrigger?.(25, 'double')}
+        onActivate={() => onActivate?.(25, 'double')}
+        onDeactivate={() => onDeactivate?.(25, 'double')}
         onTrigger={() => onTrigger?.(25, 'double')}
       />
     </g>
