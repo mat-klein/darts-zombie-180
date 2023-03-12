@@ -1,5 +1,3 @@
-import { useRef } from 'react';
-import { useHover } from 'usehooks-ts';
 import BoardArcElement from './BoardArcElement';
 import { Color, newColor } from '../../utils/colors';
 import { SlicePart } from '../../utils/darts';

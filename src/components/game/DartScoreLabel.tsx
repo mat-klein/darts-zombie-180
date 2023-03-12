@@ -1,4 +1,3 @@
-import { TouchEventHandler, useState } from 'react';
 import { DartHit, dartHitShortString } from '../../utils/darts';
 
 type DartScoreLabelProps = {

@@ -1,17 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import Board from './components/board/Board';
-import { useWindowSize } from 'usehooks-ts';
 import DartIcon from './components/icons/DartIcon';
-import {
-  DartHit,
-  SlicePart,
-  dartHitShortString,
-} from './utils/darts';
+import { DartHit, SlicePart } from './utils/darts';
 import { Vector2 } from './utils/coordinates';
 import { Color, newColor } from './utils/colors';
 import DartScoreLabel from './components/game/DartScoreLabel';
+import { SquareButton } from './components/ui/SquareButton';
+import OverlayBox from './components/ui/OverlayBox';
+import Modal from './components/ui/Modal';
+import { MenuButton } from './components/ui/MenuButton';
 
 type DartHitHistoryItem = {
   score: number;
@@ -34,7 +32,9 @@ function App() {
     BigHitDartDisplay | undefined
   >(undefined);
   const [showDistribution, setShowDistribution] = useState(false);
-  const [isUndoPressed, setIsUndoPressed] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [tellScore, setTellScore] = useState(false);
   const initialBoardPosition: Vector2 = useMemo(
     () => (boardZoom ? [0, -60] : [0.0, 40.0]),
     [boardZoom]
@@ -50,6 +50,17 @@ function App() {
         hits.length > 0 ? hits[hits.length - 1].round : 0;
       const lastDartIndex =
         hits.length > 0 ? hits[hits.length - 1].dartIndex : 999;
+      const dartIndex =
+        hits.length > 0
+          ? (hits[hits.length - 1].dartIndex + 1) % dartsPerRound
+          : 0;
+
+      setSoundEnabled((soundEnabled) => {
+        if (soundEnabled && dartIndex === dartsPerRound - 1) {
+          setTellScore(true);
+        }
+        return soundEnabled;
+      });
 
       return [
         ...hits,
@@ -62,10 +73,7 @@ function App() {
               : slicePart === 'double'
               ? 2
               : 1),
-          dartIndex:
-            hits.length > 0
-              ? (hits[hits.length - 1].dartIndex + 1) % dartsPerRound
-              : 0,
+          dartIndex,
           round:
             lastDartIndex >= dartsPerRound - 1
               ? lastDartRound + 1
@@ -74,6 +82,11 @@ function App() {
       ];
     });
   };
+
+  function restartGame() {
+    setHits([]);
+    setShowMenu(false);
+  }
 
   const lastDartRound =
     hits.length > 0 ? hits[hits.length - 1].round : 0;
@@ -108,6 +121,38 @@ function App() {
   );
   const thisRoundStats = roundStats[roundStats.length - 1];
   const lastRoundsStats = roundStats.slice(0, -1).reverse();
+
+  if (tellScore && lastRoundsStats.length > 0) {
+    const scored = lastRoundsStats[0].score;
+    let utterance = new SpeechSynthesisUtterance(
+      scored <= 0
+        ? 'no score'
+        : scored < 10
+        ? `${scored} scored`
+        : `${scored}`
+    );
+    const voicesList = speechSynthesis.getVoices();
+    /*alert(
+      voicesList
+        .filter((voice) => voice.lang.startsWith('en-'))
+        .map((voice) => `${voice.name} - ${voice.lang}`)
+        .join(', ')
+    );*/
+    utterance.voice =
+      voicesList.reverse().find(
+        (voice) => voice.name === 'Daniel' // hotfix for iOS en-GB voice
+      ) || null;
+    utterance.lang = 'en-GB';
+    if (scored >= 100) {
+      utterance.pitch = 1.1;
+      utterance.rate = 0.75;
+    } else {
+      utterance.pitch = 0.9;
+      utterance.rate = 0.8;
+    }
+    speechSynthesis.speak(utterance);
+    setTellScore(false);
+  }
 
   const hitColorDelta = 25;
   const fullOverlayColors: Record<
@@ -183,18 +228,13 @@ function App() {
           }, 250)
         }
       />
-      <div
+      <OverlayBox
+        hide={boardActive}
         style={{
-          position: 'absolute',
           top: 8,
           left: 8,
           right: 8,
-          backgroundColor: 'rgba(220,220,220,0.6)',
-          borderRadius: 8,
           padding: 12,
-          display: boardActive ? 'none' : 'flex',
-          flexDirection: 'column',
-          alignItems: 'stretch',
         }}
       >
         <div
@@ -254,28 +294,26 @@ function App() {
             </p>
           )}
         </div>
-      </div>
-      <div
+      </OverlayBox>
+      <OverlayBox
+        hide={boardActive}
+        flexDirection="row"
         style={{
-          display: boardActive ? 'none' : 'flex',
-          flexDirection: 'row',
-          position: 'absolute',
           bottom: 32,
           left: 8,
           right: 8,
-          height: 148,
-          backgroundColor: 'rgba(220,220,220,0.6)',
-          borderRadius: 8,
-          padding: 0,
+          height: 128,
         }}
       >
         <div
           style={{
+            flex: 1,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'start',
             gap: 8,
             overflowY: 'auto',
+            overflowX: 'hidden',
             padding: 8,
           }}
         >
@@ -310,80 +348,54 @@ function App() {
         </div>
         <div
           style={{
-            position: 'absolute',
-            bottom: 8,
-            right: 8 + 64 + 8,
-            height: 64,
-            width: 64,
-            fontSize: 40,
-            lineHeight: '40px',
-            textAlign: 'center',
-            boxSizing: 'border-box',
-            backgroundColor: isUndoPressed
-              ? 'rgba(204,204,157,0.7)'
-              : 'rgba(224,224,187,0.9)',
-            borderRadius: 8,
-            padding: 12,
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 8,
+            flexWrap: 'wrap',
+            padding: 8,
+            justifyContent: 'flex-end',
           }}
-          onClick={undoAction}
-          onTouchStart={() => setIsUndoPressed(true)}
-          onTouchEnd={() => setIsUndoPressed(false)}
         >
-          ⬅️
+          <SquareButton onClick={undoAction}>⬅️</SquareButton>
+          <SquareButton
+            isActive={soundEnabled}
+            onClick={() =>
+              setSoundEnabled((soundEnabled) => !soundEnabled)
+            }
+          >
+            {soundEnabled ? '🔈' : '🔇'}
+          </SquareButton>
+          <SquareButton
+            isActive={boardZoom}
+            onClick={() => setBoardZoom((boardZoom) => !boardZoom)}
+          >
+            🔍
+          </SquareButton>
+          <SquareButton
+            isActive={showDistribution}
+            onClick={() =>
+              setShowDistribution(
+                (showDistribution) => !showDistribution
+              )
+            }
+          >
+            📊
+          </SquareButton>
+          <SquareButton
+            isActive={showMenu}
+            onClick={() => setShowMenu((showMenu) => !showMenu)}
+          >
+            💠
+          </SquareButton>
         </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 8,
-            right: 8,
-            height: 64,
-            width: 64,
-            fontSize: 40,
-            lineHeight: '40px',
-            textAlign: 'center',
-            boxSizing: 'border-box',
-            backgroundColor: boardZoom
-              ? 'rgba(204,204,157,0.7)'
-              : 'rgba(224,224,187,0.9)',
-            borderColor: 'black',
-            borderStyle: 'solid',
-            borderWidth: boardZoom ? 2 : 0,
-            borderRadius: 8,
-            padding: 12,
-          }}
-          onClick={() => setBoardZoom((boardZoom) => !boardZoom)}
-        >
-          🔍
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 8 + 64 + 8,
-            right: 8,
-            height: 64,
-            width: 64,
-            fontSize: 40,
-            lineHeight: '40px',
-            textAlign: 'center',
-            boxSizing: 'border-box',
-            backgroundColor: showDistribution
-              ? 'rgba(204,204,157,0.7)'
-              : 'rgba(224,224,187,0.9)',
-            borderColor: 'black',
-            borderStyle: 'solid',
-            borderWidth: showDistribution ? 2 : 0,
-            borderRadius: 8,
-            padding: 12,
-          }}
-          onClick={() =>
-            setShowDistribution(
-              (showDistribution) => !showDistribution
-            )
-          }
-        >
-          📊
-        </div>
-      </div>
+      </OverlayBox>
+      {showMenu && (
+        <Modal onClose={() => setShowMenu(false)}>
+          <h2>Game menu</h2>
+          <MenuButton onClick={restartGame}>Restart game</MenuButton>
+        </Modal>
+      )}
     </div>
   );
 }
