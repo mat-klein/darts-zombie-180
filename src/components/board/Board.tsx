@@ -367,7 +367,6 @@ const Board = ({
         .board-number {
           text-align: center;
           fill: white;
-          font-family: 'Kumar One';
           font-size: 26px;
         }
         `}

@@ -10,6 +10,7 @@ import { SquareButton } from './components/ui/SquareButton';
 import OverlayBox from './components/ui/OverlayBox';
 import Modal from './components/ui/Modal';
 import { MenuButton } from './components/ui/MenuButton';
+import Box from './components/ui/Box';
 
 type DartHitHistoryItem = {
   score: number;
@@ -237,13 +238,10 @@ function App() {
           padding: 12,
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
+        <Box
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="center"
         >
           <h2 style={{ margin: 0 }}>{playerName}</h2>
           <h1 style={{ margin: 0 }}>
@@ -260,14 +258,11 @@ function App() {
               )
             )}
           </div>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
+        </Box>
+        <Box
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="center"
         >
           <div
             style={{
@@ -293,28 +288,25 @@ function App() {
               ).toFixed(1)}
             </p>
           )}
-        </div>
+        </Box>
       </OverlayBox>
       <OverlayBox
         hide={boardActive}
         flexDirection="row"
+        justifyContent="flex-end"
         style={{
           bottom: 32,
           left: 8,
           right: 8,
-          height: 128,
+          height: 160,
+          padding: 8,
         }}
       >
-        <div
+        <Box
+          gap={8}
           style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'start',
-            gap: 8,
             overflowY: 'auto',
-            overflowX: 'hidden',
-            padding: 8,
+            flex: 'none',
           }}
         >
           {lastRoundsStats.map((roundStats, inx) => (
@@ -345,16 +337,14 @@ function App() {
               </div>
             </div>
           ))}
-        </div>
-        <div
+        </Box>
+        <Box
+          gap={8}
+          flexDirection="row"
+          justifyContent="flex-end"
           style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'row',
-            gap: 8,
             flexWrap: 'wrap',
-            padding: 8,
-            justifyContent: 'flex-end',
+            maxWidth: 160,
           }}
         >
           <SquareButton onClick={undoAction}>⬅️</SquareButton>
@@ -388,7 +378,7 @@ function App() {
           >
             💠
           </SquareButton>
-        </div>
+        </Box>
       </OverlayBox>
       {showMenu && (
         <Modal onClose={() => setShowMenu(false)}>

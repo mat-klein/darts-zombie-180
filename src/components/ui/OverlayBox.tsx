@@ -1,34 +1,29 @@
-import { CSSProperties } from 'react';
+import Box, { BoxProps } from './Box';
 
 export type OverlayBoxProps = {
-  children: React.ReactNode;
   hide?: boolean;
-  flexDirection?: 'row' | 'column';
-  style?: CSSProperties;
-};
+} & BoxProps;
 
 export default function OverlayBox({
   hide,
-  children,
   style,
-  flexDirection = 'column',
+  padding,
+  ...props
 }: OverlayBoxProps) {
   return (
-    <div
+    <Box
       style={{
         display: hide ? 'none' : 'flex',
-        flexDirection,
         position: 'absolute',
         backgroundColor: 'rgba(220,220,220,0.6)',
         borderRadius: 8,
-        padding: 0,
         backdropFilter: 'blur(4px)',
         WebkitBackdropFilter: 'blur(4px)',
-        alignItems: 'stretch',
+        zIndex: 10,
         ...style,
       }}
-    >
-      {children}
-    </div>
+      padding={padding || 0}
+      {...props}
+    />
   );
 }

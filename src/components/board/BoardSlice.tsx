@@ -76,6 +76,7 @@ const BoardSlice = ({
         textAnchor="middle"
         alignmentBaseline="central"
         className="board-number"
+        fontFamily="Kumar One"
       >
         {number}
       </text>
