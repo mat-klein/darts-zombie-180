@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/darts-zombie-180/static/css/main.cdfcfc61.css",
-    "main.js": "/darts-zombie-180/static/js/main.726f9b9f.js",
+    "main.js": "/darts-zombie-180/static/js/main.2e4d2eb8.js",
     "static/js/787.cc7b0d69.chunk.js": "/darts-zombie-180/static/js/787.cc7b0d69.chunk.js",
     "index.html": "/darts-zombie-180/index.html",
     "main.cdfcfc61.css.map": "/darts-zombie-180/static/css/main.cdfcfc61.css.map",
-    "main.726f9b9f.js.map": "/darts-zombie-180/static/js/main.726f9b9f.js.map",
+    "main.2e4d2eb8.js.map": "/darts-zombie-180/static/js/main.2e4d2eb8.js.map",
     "787.cc7b0d69.chunk.js.map": "/darts-zombie-180/static/js/787.cc7b0d69.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.cdfcfc61.css",
-    "static/js/main.726f9b9f.js"
+    "static/js/main.2e4d2eb8.js"
   ]
 }
