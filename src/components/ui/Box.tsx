@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, MouseEventHandler } from 'react';
 import { Property } from 'csstype';
 
 export type BoxProps = {
@@ -6,7 +6,8 @@ export type BoxProps = {
   flexDirection?: Property.FlexDirection;
   justifyContent?: Property.JustifyContent;
   alignItems?: Property.AlignItems;
-  padding?: number;
+  padding?: Property.Padding<string | number>;
+  onClick?: MouseEventHandler;
   gap?: number;
   style?: CSSProperties;
 };
@@ -19,12 +20,13 @@ export default function Box({
   alignItems = 'stretch',
   padding,
   gap,
+  onClick,
 }: BoxProps) {
   return (
     <div
       style={{
-        flex: 1,
         display: 'flex',
+        boxSizing: 'border-box',
         flexDirection,
         justifyContent,
         alignItems,
@@ -32,6 +34,7 @@ export default function Box({
         gap,
         ...style,
       }}
+      onClick={onClick}
     >
       {children}
     </div>

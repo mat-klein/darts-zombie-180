@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useHover } from 'usehooks-ts';
 import { fromPolar } from '../../utils/coordinates';
 import {
   Color,

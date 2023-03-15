@@ -29,9 +29,9 @@ import DartScoreLabel from '../game/DartScoreLabel';
 
 type BoardProps = {
   initialZoom: number;
+  disabled?: boolean;
   initialPosition: Vector2;
   overlayColors?: Record<number, Partial<Record<SlicePart, Color>>>;
-  bigHitDisplay?: { isShadow?: boolean } & DartHit;
   onStartSelection?: () => void;
   onStopSelection?: () => void;
   onActivateElement?: (number: number, part: SlicePart) => void;
@@ -40,11 +40,15 @@ type BoardProps = {
   onScreenViewReset?: () => void;
 };
 
+type BigHitDartDisplay = {
+  isShadow?: boolean;
+} & DartHit;
+
 const Board = ({
+  disabled,
   initialZoom,
   initialPosition,
   overlayColors,
-  bigHitDisplay,
   onActivateElement,
   onDeactivateElement,
   onTriggerElement,
@@ -67,9 +71,9 @@ const Board = ({
     initialZoom,
   ]);
 
-  const [showBigHit, setShowBigHit] = useState<DartHit | undefined>(
-    undefined
-  );
+  const [showBigHit, setShowBigHit] = useState<
+    BigHitDartDisplay | undefined
+  >(undefined);
 
   useEffect(() => {
     setScreenView([...initialPosition, initialZoom]);
@@ -114,6 +118,9 @@ const Board = ({
 
         setScreenView((screenView) => {
           if (resetInterpolate === 0) {
+            setTimeout(() => {
+              setShowBigHit(undefined);
+            }, 250);
             onScreenViewReset?.();
             return [...initialPosition, initialZoom];
           }
@@ -329,6 +336,21 @@ const Board = ({
     resetScreenView();
   }
 
+  function triggerElement(number: number, part: SlicePart) {
+    setShowBigHit({ number, slicePart: part });
+    onTriggerElement?.(number, part);
+  }
+
+  function activateElement(number: number, part: SlicePart) {
+    setShowBigHit({ number, slicePart: part, isShadow: true });
+    onActivateElement?.(number, part);
+  }
+
+  function deactivateElement(number: number, part: SlicePart) {
+    setShowBigHit(undefined);
+    onDeactivateElement?.(number, part);
+  }
+
   return (
     <div
       style={{
@@ -341,10 +363,10 @@ const Board = ({
         bottom: 0,
         right: 0,
       }}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchCancel}
+      onTouchStart={disabled ? undefined : onTouchStart}
+      onTouchMove={disabled ? undefined : onTouchMove}
+      onTouchEnd={disabled ? undefined : onTouchEnd}
+      onTouchCancel={disabled ? undefined : onTouchCancel}
     >
       <svg
         fill="none"
@@ -386,9 +408,9 @@ const Board = ({
             radius={181.5}
             color={newColor(0, 0, 0, 1)}
             overlayColor={overlayColors?.[0]?.none}
-            onActivate={() => onActivateElement?.(0, 'none')}
-            onDeactivate={() => onDeactivateElement?.(0, 'none')}
-            onTrigger={() => onTriggerElement?.(0, 'none')}
+            onActivate={() => activateElement?.(0, 'none')}
+            onDeactivate={() => deactivateElement?.(0, 'none')}
+            onTrigger={() => triggerElement?.(0, 'none')}
           />
           {boardSliceNumbers.map((number, inx) => (
             <BoardSlice
@@ -397,24 +419,24 @@ const Board = ({
               angle={18 * inx}
               darkSlice={inx % 2 === 0}
               overlayColors={overlayColors?.[number]}
-              onActivate={onActivateElement}
-              onDeactivate={onDeactivateElement}
-              onTrigger={onTriggerElement}
+              onActivate={activateElement}
+              onDeactivate={deactivateElement}
+              onTrigger={triggerElement}
             />
           ))}
           <BoardBull
             innerRadius={8}
             outerRadius={20}
             overlayColors={overlayColors?.[25]}
-            onActivate={onActivateElement}
-            onDeactivate={onDeactivateElement}
-            onTrigger={onTriggerElement}
+            onActivate={activateElement}
+            onDeactivate={deactivateElement}
+            onTrigger={triggerElement}
           />
         </g>
       </svg>
       <div
         style={{
-          display: bigHitDisplay ? 'block' : 'none',
+          display: showBigHit ? 'block' : 'none',
           position: 'absolute',
           top: '44%',
           left: '50%',
@@ -424,11 +446,11 @@ const Board = ({
       >
         <DartScoreLabel
           hit={
-            bigHitDisplay ||
+            showBigHit ||
             ({ number: 0, slicePart: 'none' } as DartHit)
           }
           big
-          shadow={bigHitDisplay?.isShadow}
+          shadow={showBigHit?.isShadow}
         />
       </div>
     </div>

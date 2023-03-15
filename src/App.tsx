@@ -8,34 +8,24 @@ import { Color, newColor } from './utils/colors';
 import DartScoreLabel from './components/game/DartScoreLabel';
 import { SquareButton } from './components/ui/SquareButton';
 import OverlayBox from './components/ui/OverlayBox';
-import Modal from './components/ui/Modal';
-import { MenuButton } from './components/ui/MenuButton';
 import Box from './components/ui/Box';
+import { AppContext, AppState } from './state/AppState';
+import { GameMenuModal } from './screens/GameMenuModal';
+import { StartGameScreen } from './screens/StartGameScreen';
+import { observer } from 'mobx-react-lite';
+import { PlayerSelectScreen } from './screens/PlayerSelectScreen';
+import { GameOverScreen } from './screens/GameOverScreen';
+import { X01GameState } from './game/x01/X01GameState';
 
-type DartHitHistoryItem = {
-  score: number;
-  dartIndex: number;
-  round: number;
-} & DartHit;
+const App = observer(() => {
+  const [appState] = useState(() => new AppState());
+  const screenState = appState.screen;
+  const gameState = appState.gameState as X01GameState | undefined;
 
-type BigHitDartDisplay = {
-  isShadow?: boolean;
-} & DartHit;
-
-const dartsPerRound = 3;
-
-function App() {
-  const playerName = 'PlayerX';
-  const [hits, setHits] = useState<DartHitHistoryItem[]>([]);
   const [boardActive, setBoardActive] = useState(false);
   const [boardZoom, setBoardZoom] = useState(false);
-  const [showBigHit, setShowBigHit] = useState<
-    BigHitDartDisplay | undefined
-  >(undefined);
   const [showDistribution, setShowDistribution] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [tellScore, setTellScore] = useState(false);
   const initialBoardPosition: Vector2 = useMemo(
     () => (boardZoom ? [0, -60] : [0.0, 40.0]),
     [boardZoom]
@@ -44,115 +34,38 @@ function App() {
 
   const boardTrigger = (number: number, slicePart: SlicePart) => {
     const newHit = { number, slicePart };
-    setShowBigHit(newHit);
-    setBoardActive(false);
-    setHits((hits) => {
-      const lastDartRound =
-        hits.length > 0 ? hits[hits.length - 1].round : 0;
-      const lastDartIndex =
-        hits.length > 0 ? hits[hits.length - 1].dartIndex : 999;
-      const dartIndex =
-        hits.length > 0
-          ? (hits[hits.length - 1].dartIndex + 1) % dartsPerRound
-          : 0;
-
-      setSoundEnabled((soundEnabled) => {
-        if (soundEnabled && dartIndex === dartsPerRound - 1) {
-          setTellScore(true);
-        }
-        return soundEnabled;
-      });
-
-      return [
-        ...hits,
-        {
-          ...newHit,
-          score:
-            number *
-            (slicePart === 'triple'
-              ? 3
-              : slicePart === 'double'
-              ? 2
-              : 1),
-          dartIndex,
-          round:
-            lastDartIndex >= dartsPerRound - 1
-              ? lastDartRound + 1
-              : lastDartRound,
-        },
-      ];
-    });
-  };
-
-  function restartGame() {
-    setHits([]);
-    setShowMenu(false);
-  }
-
-  const lastDartRound =
-    hits.length > 0 ? hits[hits.length - 1].round : 0;
-  const lastDartIndex =
-    hits.length > 0 ? hits[hits.length - 1].dartIndex : 999;
-  const thisRound =
-    lastDartIndex >= dartsPerRound - 1
-      ? lastDartRound + 1
-      : lastDartRound;
-
-  const dartsRemaining =
-    hits.length > 0
-      ? dartsPerRound - 1 - lastDartIndex || dartsPerRound
-      : dartsPerRound;
-
-  type RoundStats = {
-    round: number;
-    hits: DartHitHistoryItem[];
-    score: number;
-  };
-  const roundStats = hits.reduce(
-    (agg: RoundStats[], hit) => {
-      agg[hit.round - 1].hits.push(hit);
-      agg[hit.round - 1].score += hit.score;
-      return agg;
-    },
-    Array.from(Array(thisRound).keys()).map((inx) => ({
-      round: inx + 1,
-      hits: [],
-      score: 0,
-    }))
-  );
-  const thisRoundStats = roundStats[roundStats.length - 1];
-  const lastRoundsStats = roundStats.slice(0, -1).reverse();
-
-  if (tellScore && lastRoundsStats.length > 0) {
-    const scored = lastRoundsStats[0].score;
-    let utterance = new SpeechSynthesisUtterance(
-      scored <= 0
-        ? 'no score'
-        : scored < 10
-        ? `${scored} scored`
-        : `${scored}`
-    );
-    const voicesList = speechSynthesis.getVoices();
-    /*alert(
-      voicesList
-        .filter((voice) => voice.lang.startsWith('en-'))
-        .map((voice) => `${voice.name} - ${voice.lang}`)
-        .join(', ')
-    );*/
-    utterance.voice =
-      voicesList.reverse().find(
-        (voice) => voice.name === 'Daniel' // hotfix for iOS en-GB voice
-      ) || null;
-    utterance.lang = 'en-GB';
-    if (scored >= 100) {
-      utterance.pitch = 1.1;
-      utterance.rate = 0.75;
-    } else {
-      utterance.pitch = 0.9;
-      utterance.rate = 0.8;
+    if (appState.gameState) {
+      appState.gameState.processDartHit(newHit);
     }
-    speechSynthesis.speak(utterance);
-    setTellScore(false);
+    setBoardActive(false);
+  };
+
+  if (gameState) {
+    if (gameState.tellScore !== undefined && soundEnabled) {
+      const scored = gameState.tellScore;
+      let utterance = new SpeechSynthesisUtterance(
+        scored <= 0
+          ? 'no score'
+          : scored < 10
+          ? `${scored} scored`
+          : `${scored}`
+      );
+      const voicesList = speechSynthesis.getVoices();
+      utterance.voice =
+        voicesList.reverse().find(
+          (voice) => voice.name === 'Daniel' // hotfix for iOS en-GB voice
+        ) || null;
+      utterance.lang = 'en-GB';
+      if (scored >= 100) {
+        utterance.pitch = 1.1;
+        utterance.rate = 0.75;
+      } else {
+        utterance.pitch = 0.9;
+        utterance.rate = 0.8;
+      }
+      speechSynthesis.speak(utterance);
+    }
+    gameState.tellScore = undefined;
   }
 
   const hitColorDelta = 25;
@@ -174,17 +87,18 @@ function App() {
       double: newColor(255, 255, 255, 1),
     };
   });
+
   const overlayColors = showDistribution
-    ? hits.reduce((agg, hit) => {
+    ? gameState?.getCurrentPlayerStats().hits.reduce((agg, hit) => {
         const color = agg[hit.number][hit.slicePart] as Color;
         color.red =
           color.red > hitColorDelta ? color.red - hitColorDelta : 0;
         color.green = color.red;
         return agg;
       }, fullOverlayColors)
-    : hits
-        .filter((hit) => hit.round === thisRound)
-        .reduce((agg, hit) => {
+    : gameState
+        ?.getCurrentPlayerStats()
+        .currentRoundHits.reduce((agg, hit) => {
           if (!agg[hit.number]) {
             agg[hit.number] = {};
           }
@@ -193,201 +107,239 @@ function App() {
         }, {} as Record<number, Partial<Record<SlicePart, Color>>>);
 
   function undoAction() {
-    setHits((hits) => [...hits.slice(0, hits.length - 1)]);
+    gameState?.undoDartHit();
   }
 
+  console.log('appState.gameState', appState.gameState);
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
-    >
-      <Board
-        initialPosition={initialBoardPosition}
-        initialZoom={initialBoardZoom}
-        overlayColors={overlayColors}
-        bigHitDisplay={showBigHit}
-        onStartSelection={() => {
-          setBoardActive(true);
-          setShowBigHit(undefined);
-        }}
-        onStopSelection={() => setBoardActive(false)}
-        onActivateElement={(number: number, part: SlicePart) =>
-          setShowBigHit({ number, slicePart: part, isShadow: true })
-        }
-        onDeactivateElement={(number: number, part: SlicePart) =>
-          setShowBigHit(undefined)
-        }
-        onTriggerElement={boardTrigger}
-        onScreenViewReset={() =>
-          setTimeout(() => {
-            setShowBigHit(undefined);
-          }, 250)
-        }
-      />
-      <OverlayBox
-        hide={boardActive}
+    <AppContext.Provider value={appState}>
+      <div
         style={{
-          top: 8,
-          left: 8,
-          right: 8,
-          padding: 12,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
         }}
       >
-        <Box
-          flexDirection="row"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <h2 style={{ margin: 0 }}>{playerName}</h2>
-          <h1 style={{ margin: 0 }}>
-            {hits.reduce(
-              (agg: number, hit: DartHitHistoryItem) =>
-                agg - hit.score,
-              501
-            )}
-          </h1>
-          <div style={{ width: 100 }}>
-            {Array.from(Array(dartsRemaining).keys()).map(
-              (v, inx) => (
-                <DartIcon key={inx} />
-              )
-            )}
-          </div>
-        </Box>
-        <Box
-          flexDirection="row"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <div
+        <Board
+          initialPosition={initialBoardPosition}
+          initialZoom={initialBoardZoom}
+          overlayColors={overlayColors}
+          onStartSelection={() => {
+            setBoardActive(true);
+          }}
+          onStopSelection={() => setBoardActive(false)}
+          onTriggerElement={boardTrigger}
+          disabled={gameState && gameState.hasGameEnded()}
+        />
+        {gameState && (
+          <OverlayBox
+            hide={boardActive}
             style={{
-              paddingTop: 8,
-              margin: 0,
-              display: 'flex',
-              flexDirection: 'row',
-              gap: 8,
+              top: 8,
+              left: 8,
+              right: 8,
+              padding: 12,
             }}
           >
-            {thisRoundStats.hits.map((hit, inx) => (
-              <DartScoreLabel key={inx} hit={hit} />
-            ))}
-          </div>
-          {thisRound >= 2 && (
-            <p style={{ margin: 0 }}>
-              Avg:
-              {(
-                roundStats.slice(0, -1).reduce((score, rs) => {
-                  return score + rs.score;
-                }, 0) /
-                (thisRound - 1)
-              ).toFixed(1)}
-            </p>
-          )}
-        </Box>
-      </OverlayBox>
-      <OverlayBox
-        hide={boardActive}
-        flexDirection="row"
-        justifyContent="flex-end"
-        style={{
-          bottom: 32,
-          left: 8,
-          right: 8,
-          height: 160,
-          padding: 8,
-        }}
-      >
-        <Box
-          gap={8}
-          style={{
-            overflowY: 'auto',
-            flex: 'none',
-          }}
-        >
-          {lastRoundsStats.map((roundStats, inx) => (
-            <div
-              key={roundStats.round}
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: 4,
-              }}
+            <Box
+              flexDirection="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <h2 style={{ margin: 0 }}>
+                {
+                  appState.players.players[
+                    gameState.getCurrentPlayer()
+                  ].icon
+                }{' '}
+                {
+                  appState.players.players[
+                    gameState.getCurrentPlayer()
+                  ].name
+                }
+              </h2>
+              <h1 style={{ margin: 0 }}>
+                {/*hits.reduce(
+                  (agg: number, hit: DartHitHistoryItem) =>
+                    agg - hit.score,
+                  501
+                )*/}
+                {gameState.getCurrentPlayerStats().scoreRemaining -
+                  gameState.getCurrentPlayerStats().currentRoundScore}
+              </h1>
+              <div style={{ width: 100 }}>
+                {Array.from(
+                  Array(gameState.getDartsRemaining()).keys()
+                ).map((v, inx) => (
+                  <DartIcon key={inx} />
+                ))}
+                {/*Array.from(Array(dartsRemaining).keys()).map(
+                  (v, inx) => (
+                    <DartIcon key={inx} />
+                  )
+                  )*/}
+              </div>
+            </Box>
+            <Box
+              flexDirection="row"
+              justifyContent="space-between"
+              alignItems="center"
             >
               <div
                 style={{
-                  lineHeight: '20px',
+                  paddingTop: 8,
+                  margin: 0,
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: 8,
                 }}
               >
-                {roundStats.round}:
+                {gameState
+                  .getCurrentPlayerStats()
+                  .currentRoundHits.map((hit, inx) => (
+                    <DartScoreLabel key={inx} hit={hit} />
+                  ))}
               </div>
-              {roundStats.hits.map((hit, inx) => (
-                <DartScoreLabel key={inx} small hit={hit} />
-              ))}
-              <div
-                style={{
-                  lineHeight: '20px',
-                }}
-              >
-                ({roundStats.score})
-              </div>
-            </div>
-          ))}
-        </Box>
-        <Box
-          gap={8}
+              {gameState.getCurrentPlayerStats().hits.length > 0 && (
+                <p style={{ margin: 0 }}>
+                  Avg:
+                  {(
+                    ((gameState.getCurrentPlayerStats().totalScore +
+                      gameState.getCurrentPlayerStats()
+                        .currentRoundScore) /
+                      gameState.getCurrentPlayerStats().hits.length) *
+                    3
+                  ).toFixed(1)}
+                </p>
+              )}
+            </Box>
+          </OverlayBox>
+        )}
+        <OverlayBox
+          hide={boardActive}
           flexDirection="row"
-          justifyContent="flex-end"
+          justifyContent="space-between"
           style={{
-            flexWrap: 'wrap',
-            maxWidth: 160,
+            bottom: 32,
+            left: 8,
+            right: 8,
+            height: 160,
+            padding: 8,
           }}
         >
-          <SquareButton onClick={undoAction}>⬅️</SquareButton>
-          <SquareButton
-            isActive={soundEnabled}
-            onClick={() =>
-              setSoundEnabled((soundEnabled) => !soundEnabled)
-            }
+          <Box
+            gap={8}
+            style={{
+              overflowY: 'auto',
+              flex: 'none',
+            }}
           >
-            {soundEnabled ? '🔈' : '🔇'}
-          </SquareButton>
-          <SquareButton
-            isActive={boardZoom}
-            onClick={() => setBoardZoom((boardZoom) => !boardZoom)}
+            {gameState &&
+              gameState.getPlayerList().map((playerId) => {
+                const player = appState.players.players[playerId];
+
+                return (
+                  <Box key={player.id}>
+                    {player.icon} {player.name}{' '}
+                    {gameState.getPlayerScore(playerId)}
+                    {gameState.settings.setsToWin > 1
+                      ? ` (${
+                          gameState.getPlayerStats(playerId).sets
+                        }|${gameState.getPlayerStats(playerId).legs})`
+                      : gameState.settings.legsToSet > 1
+                      ? ` (${
+                          gameState.getPlayerStats(playerId).legs
+                        })`
+                      : ''}
+                  </Box>
+                );
+              })}
+            {/*
+              lastRoundsStats.map((roundStats, inx) => (
+                <div
+                  key={roundStats.round}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: 4,
+                  }}
+                >
+                  <div
+                    style={{
+                      lineHeight: '20px',
+                    }}
+                  >
+                    {roundStats.round}:
+                  </div>
+                  {roundStats.hits.map((hit, inx) => (
+                    <DartScoreLabel key={inx} small hit={hit} />
+                  ))}
+                  <div
+                    style={{
+                      lineHeight: '20px',
+                    }}
+                  >
+                    ({roundStats.score})
+                  </div>
+                </div>
+                  ))*/}
+          </Box>
+          <Box
+            gap={8}
+            flexDirection="row"
+            justifyContent="flex-end"
+            style={{
+              flexWrap: 'wrap',
+              maxWidth: 160,
+            }}
           >
-            🔍
-          </SquareButton>
-          <SquareButton
-            isActive={showDistribution}
-            onClick={() =>
-              setShowDistribution(
-                (showDistribution) => !showDistribution
-              )
-            }
-          >
-            📊
-          </SquareButton>
-          <SquareButton
-            isActive={showMenu}
-            onClick={() => setShowMenu((showMenu) => !showMenu)}
-          >
-            💠
-          </SquareButton>
-        </Box>
-      </OverlayBox>
-      {showMenu && (
-        <Modal onClose={() => setShowMenu(false)}>
-          <h2>Game menu</h2>
-          <MenuButton onClick={restartGame}>Restart game</MenuButton>
-        </Modal>
-      )}
-    </div>
+            <SquareButton onClick={undoAction}>⬅️</SquareButton>
+            <SquareButton
+              isActive={soundEnabled}
+              onClick={() =>
+                setSoundEnabled((soundEnabled) => !soundEnabled)
+              }
+            >
+              {soundEnabled ? '🔈' : '🔇'}
+            </SquareButton>
+            <SquareButton
+              isActive={boardZoom}
+              onClick={() => setBoardZoom((boardZoom) => !boardZoom)}
+            >
+              🔍
+            </SquareButton>
+            <SquareButton
+              isActive={showDistribution}
+              onClick={() =>
+                setShowDistribution(
+                  (showDistribution) => !showDistribution
+                )
+              }
+            >
+              📊
+            </SquareButton>
+            <SquareButton
+              isActive={screenState.showGameMenu}
+              onClick={() => screenState.toggleGameMenu()}
+            >
+              💠
+            </SquareButton>
+          </Box>
+        </OverlayBox>
+        {screenState.showGameMenu && <GameMenuModal />}
+        {screenState.currentRoute === 'startgame' && (
+          <StartGameScreen />
+        )}
+        {screenState.currentRoute === 'playerselect' && (
+          <PlayerSelectScreen />
+        )}
+        {gameState && gameState.hasGameEnded() && <GameOverScreen />}
+      </div>
+    </AppContext.Provider>
   );
-}
+});
 
 export default App;

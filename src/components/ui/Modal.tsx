@@ -4,11 +4,13 @@ import { SquareButton } from './SquareButton';
 export type ModalProps = {
   children: React.ReactNode;
   style?: CSSProperties;
+  hideClose?: boolean;
   onClose?: () => void;
 };
 
 export default function Modal({
   children,
+  hideClose,
   onClose,
   style,
 }: ModalProps) {
@@ -37,19 +39,22 @@ export default function Modal({
           bottom: 8,
           borderRadius: 8,
           backgroundColor: 'rgba(255,255,255,0.7)',
-          padding: 8,
+          padding: 12,
           alignItems: 'stretch',
+          gap: 12,
           ...style,
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-          }}
-        >
-          <SquareButton onClick={onClose}>X</SquareButton>
-        </div>
+        {!hideClose && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <SquareButton onClick={onClose}>X</SquareButton>
+          </div>
+        )}
         {children}
       </div>
     </div>
