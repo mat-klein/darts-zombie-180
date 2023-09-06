@@ -15,8 +15,7 @@ export default function OverlayBox({
       style={{
         display: hide ? 'none' : 'flex',
         position: 'absolute',
-        backgroundColor: 'rgba(220,220,220,0.6)',
-        borderRadius: 8,
+        backgroundColor: 'rgba(178,178,178,0.6)',
         backdropFilter: 'blur(4px)',
         WebkitBackdropFilter: 'blur(4px)',
         zIndex: 10,

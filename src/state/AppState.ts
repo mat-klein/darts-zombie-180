@@ -9,6 +9,8 @@ export class AppState {
   players = new PlayersState();
   //userSession: UserSessionState = new UserSessionState();
   gameState?: GameState = undefined;
+  soundState?: boolean = false;
+  distributionState?: boolean = false;
 
   constructor() {
     makeAutoObservable(this, {});

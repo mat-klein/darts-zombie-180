@@ -1,8 +1,14 @@
-export default function DartIcon() {
+type Sizes = "large" | "default" | "small";
+
+export type MenuButtonProps = {
+  size?: Sizes;
+};
+
+export default function DartIcon({size}: MenuButtonProps) {
   return (
     <svg
-      width="32"
-      height="32"
+      width={size==="large" ? 48 : size === "small" ? 16 : 32}
+      height={size==="large" ? 48 : size === "small" ? 16 : 32}
       viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

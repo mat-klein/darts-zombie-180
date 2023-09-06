@@ -1,10 +1,16 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable } from "mobx";
 
-type AllRoutes = 'startgame' | 'playerselect' | 'game';
+type AllRoutes =
+  | "startgame"
+  | "playerselect"
+  | "playercards"
+  | "game"
+  | "hamburger";
 
 export class ScreenState {
-  currentRoute: AllRoutes = 'startgame';
+  currentRoute: AllRoutes = "startgame";
   showGameMenu: boolean = false;
+  showHamburgerMenu: boolean = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -19,6 +25,14 @@ export class ScreenState {
       this.showGameMenu = show;
     } else {
       this.showGameMenu = !this.showGameMenu;
+    }
+  }
+
+  toggleHamburgerMenu(show?: boolean) {
+    if (show !== undefined) {
+      this.showHamburgerMenu = show;
+    } else {
+      this.showHamburgerMenu = !this.showHamburgerMenu;
     }
   }
 }

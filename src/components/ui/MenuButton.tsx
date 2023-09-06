@@ -1,33 +1,47 @@
-import { MouseEventHandler, useState } from 'react';
+import { MouseEventHandler, useState } from "react";
+
+type Sizes = "large" | "default" | "small";
 
 export type MenuButtonProps = {
   children: React.ReactNode;
   onClick?: MouseEventHandler;
+  isActive?: boolean;
   disabled?: boolean;
+  size?: Sizes;
 };
 
 export function MenuButton({
   children,
   disabled,
   onClick,
+  isActive,
+  size,
 }: MenuButtonProps) {
   const [isPressed, setIsPressed] = useState(false);
   return (
     <div
       style={{
-        height: 64,
-        fontSize: 24,
-        lineHeight: '40px',
-        textAlign: 'center',
-        boxSizing: 'border-box',
+        width: "100%",
+        maxWidth: size === "large" ? "100%" : size === "small" ? 240 : 320,
+        height: size === "large" ? 64 : size === "small" ? 32 : 48,
+        fontSize: size === "large" ? 24 : size === "small" ? 16 : 20,
+        fontWeight:
+          size === "large" ? "bold" : size === "small" ? "lighter" : "normal",
+        lineHeight:
+          size === "large" ? "48px" : size === "small" ? "16px" : "32px",
+        textAlign: "center",
+        boxSizing: "border-box",
         backgroundColor: disabled
-          ? 'rgba(204,204,157,0.5)'
+          ? "#B3B3B3"
           : isPressed
-          ? 'rgba(204,204,157,0.7)'
-          : 'rgba(224,224,187,0.9)',
-        color: disabled ? '#AA8' : '#000',
-        borderRadius: 8,
-        padding: 12,
+          ? "#0A301D"
+          : "#22634F",
+        color: disabled ? "#808080" : "#E6E6E6",
+        borderRadius: 4,
+        padding: 8,
+        display: "flex",
+        justifyContent: "center",
+        alignSelf: "center",
       }}
       onClick={disabled ? undefined : onClick}
       onTouchStart={() => setIsPressed(true)}

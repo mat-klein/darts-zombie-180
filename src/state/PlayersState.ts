@@ -5,6 +5,7 @@ type PlayerData = {
   id: string;
   name: string;
   icon?: string;
+  //playtime legsplayed legswon setsplayed setswon dartsthrown  
 };
 
 export class PlayersState {

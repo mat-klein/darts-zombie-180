@@ -1,6 +1,7 @@
-import { makeAutoObservable } from 'mobx';
-import { GameState } from '../GameState';
-import { DartHit, getHitScore } from '../../utils/darts';
+import { makeAutoObservable } from "mobx";
+import { GameState } from "../GameState";
+import { DartHit, getHitScore } from "../../utils/darts";
+import { X01GameCheckout } from "./X01GameCheckout";
 
 type PlayerStat = {
   currentRoundScore: number;
@@ -10,7 +11,10 @@ type PlayerStat = {
   sets: number;
   hits: DartHit[];
   currentLegScore: number;
+  currentLegHits: DartHit[];
   currentSetScore: number;
+  //currentSetHits: DartHit[];
+  checkoutAttempts: DartHit[];
   totalLegsWon: number;
   totalScore: number;
 };
@@ -34,6 +38,7 @@ export const defaultSettings: X01GameSettings = {
 };
 
 export class X01GameState implements GameState {
+  gameCheckouts = new X01GameCheckout();
   currentPlayer: number = 0;
   players: string[] = [];
   playerStats: Record<string, PlayerStat> = {};
@@ -43,10 +48,7 @@ export class X01GameState implements GameState {
   tellScore: number | undefined;
   allHits: DartHit[] = [];
 
-  constructor(
-    players: string[],
-    settings: X01GameSettings = defaultSettings
-  ) {
+  constructor(players: string[], settings: X01GameSettings = defaultSettings) {
     this.players = players;
     this.settings = settings;
     this.restart();
@@ -54,7 +56,7 @@ export class X01GameState implements GameState {
   }
 
   getType(): string {
-    return 'x01';
+    return "x01";
   }
 
   getCurrentPlayer(): string {
@@ -85,7 +87,7 @@ export class X01GameState implements GameState {
     this.playerStats[playerId].sets += 1;
     if (this.playerStats[playerId].sets >= this.settings.setsToWin) {
       this.gameEnded = true;
-      console.log('gameEnded');
+      console.log("gameEnded");
     }
     // reset legs
     this.players.forEach((pId) => {
@@ -101,6 +103,7 @@ export class X01GameState implements GameState {
     // reset legs
     this.players.forEach((pId) => {
       this.playerStats[pId].currentLegScore = 0;
+      this.playerStats[pId].currentLegHits = [];
     });
     if (this.playerStats[playerId].legs >= this.settings.legsToSet) {
       this.addSetWin(playerId);
@@ -123,24 +126,37 @@ export class X01GameState implements GameState {
     const playerStats = this.getCurrentPlayerStats();
     playerStats.hits.push(hit);
     playerStats.currentRoundHits.push(hit);
+    playerStats.currentLegHits.push(hit);
+    //playerStats.currentSetHits.push(hit);
     const hitScore = getHitScore(hit);
+
+    this.gameCheckouts.isCheckoutPossible(
+      playerStats.scoreRemaining - playerStats.currentRoundScore,
+      1
+    ) &&
+      playerStats.checkoutAttempts.push({
+        number: hit.number,
+        slicePart: hit.slicePart,
+        targetExpected: {
+          number:
+            (playerStats.scoreRemaining - playerStats.currentRoundScore) / 2,
+          slicePart: "double",
+        },
+      });
+
     if (
       (!this.settings.doubleIn ||
         playerStats.scoreRemaining - playerStats.currentRoundScore <
           this.settings.startScore ||
-        hit.slicePart === 'double') &&
+        hit.slicePart === "double") &&
       (!this.settings.doubleOut ||
-        playerStats.scoreRemaining -
-          playerStats.currentRoundScore -
-          hitScore >
+        playerStats.scoreRemaining - playerStats.currentRoundScore - hitScore >
           1)
     ) {
       playerStats.currentRoundScore += hitScore;
     } else if (
       // bust
-      playerStats.scoreRemaining -
-        playerStats.currentRoundScore -
-        hitScore <
+      playerStats.scoreRemaining - playerStats.currentRoundScore - hitScore <
       0
     ) {
       // no score
@@ -149,24 +165,20 @@ export class X01GameState implements GameState {
     } else if (
       // bust with double out
       this.settings.doubleOut &&
-      (playerStats.scoreRemaining -
-        playerStats.currentRoundScore -
-        hitScore ===
+      (playerStats.scoreRemaining - playerStats.currentRoundScore - hitScore ===
         1 ||
         (playerStats.scoreRemaining -
           playerStats.currentRoundScore -
           hitScore ===
           0 &&
-          hit.slicePart !== 'double'))
+          hit.slicePart !== "double"))
     ) {
       // no score
       playerStats.currentRoundScore = 0;
       this.currentDartsRemaining = 0;
     } else if (
       // won
-      playerStats.scoreRemaining -
-        playerStats.currentRoundScore -
-        hitScore ===
+      playerStats.scoreRemaining - playerStats.currentRoundScore - hitScore ===
       0
     ) {
       // no score
@@ -188,8 +200,7 @@ export class X01GameState implements GameState {
         this.addLegWin(this.getCurrentPlayer());
       }
       // next player
-      this.currentPlayer =
-        (this.currentPlayer + 1) % this.players.length;
+      this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
       this.currentDartsRemaining = dartsPerRound;
     }
   }
@@ -215,16 +226,15 @@ export class X01GameState implements GameState {
 
   guessTarget(hit?: DartHit): DartHit {
     const playerStats = this.getCurrentPlayerStats();
-    const score =
-      playerStats.scoreRemaining - playerStats.currentRoundScore;
+    const score = playerStats.scoreRemaining - playerStats.currentRoundScore;
     if (score <= 40) {
       if (score % 2 === 0) {
-        return { slicePart: 'double', number: score / 2 };
+        return { slicePart: "double", number: score / 2 };
       } else {
-        return { slicePart: 'outer', number: 1 };
+        return { slicePart: "outer", number: 1 };
       }
     }
-    return { slicePart: 'triple', number: 20 };
+    return { slicePart: "triple", number: 20 };
   }
 
   restart(): void {
@@ -237,7 +247,10 @@ export class X01GameState implements GameState {
         legs: 0,
         sets: 0,
         currentLegScore: 0,
+        currentLegHits: [],
         currentSetScore: 0,
+        //currentSetHits: [],
+        checkoutAttempts: [],
         totalScore: 0,
         totalLegsWon: 0,
         hits: [],

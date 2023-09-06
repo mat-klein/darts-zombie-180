@@ -1,14 +1,8 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  TouchEvent,
-  Touch,
-} from 'react';
-import { useHover } from 'usehooks-ts';
-import BoardSlice from './BoardSlice';
-import BoardBull from './BoardBull';
-import BoardCircleElement from './BoardCircleElement';
+import { useEffect, useRef, useState, TouchEvent, Touch } from "react";
+import { useHover } from "usehooks-ts";
+import BoardSlice from "./BoardSlice";
+import BoardBull from "./BoardBull";
+import BoardCircleElement from "./BoardCircleElement";
 import {
   CoordinateSystem,
   Vector2,
@@ -17,15 +11,11 @@ import {
   translateCoordinateSystem,
   vectorDiff,
   vectorMultiply,
-} from '../../utils/coordinates';
-import {
-  DartHit,
-  SlicePart,
-  boardSliceNumbers,
-} from '../../utils/darts';
-import { zoomOnPoint } from '../../utils/zoom';
-import { Color, newColor } from '../../utils/colors';
-import DartScoreLabel from '../game/DartScoreLabel';
+} from "../../utils/coordinates";
+import { DartHit, SlicePart, boardSliceNumbers } from "../../utils/darts";
+import { zoomOnPoint } from "../../utils/zoom";
+import { Color, newColor } from "../../utils/colors";
+import DartScoreLabel from "../game/DartScoreLabel";
 
 type BoardProps = {
   initialZoom: number;
@@ -58,8 +48,7 @@ const Board = ({
 }: BoardProps) => {
   const ref20 = useRef(null);
   const isHover20 = useHover(ref20);
-  const [currentActiveElement, setCurrentActiveElement] =
-    useState<any>(null);
+  const [currentActiveElement, setCurrentActiveElement] = useState<any>(null);
 
   // centerX, centerY, zoom
   const maxZoom = 7;
@@ -71,25 +60,17 @@ const Board = ({
     initialZoom,
   ]);
 
-  const [showBigHit, setShowBigHit] = useState<
-    BigHitDartDisplay | undefined
-  >(undefined);
+  const [showBigHit, setShowBigHit] = useState<BigHitDartDisplay | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     setScreenView([...initialPosition, initialZoom]);
   }, [initialPosition, initialZoom]);
-  const [touchCenter, setTouchCenter] = useState<Vector2 | null>(
-    null
-  );
-  const [centerVelocity, setCenterVelocity] = useState<Vector2>([
-    0, 0,
-  ]);
-  const [cancelInterval, setCancelInterval] = useState<number | null>(
-    null
-  );
-  const [touchIdentifier, setTouchIdentifier] = useState<
-    number | null
-  >(null);
+  const [touchCenter, setTouchCenter] = useState<Vector2 | null>(null);
+  const [centerVelocity, setCenterVelocity] = useState<Vector2>([0, 0]);
+  const [cancelInterval, setCancelInterval] = useState<number | null>(null);
+  const [touchIdentifier, setTouchIdentifier] = useState<number | null>(null);
 
   /**
    * animate resetting the zoom & center to initial values
@@ -141,11 +122,7 @@ const Board = ({
           const newScale =
             oldScreenView[2] * interpolateZoom +
             initialZoom * (1 - interpolateZoom);
-          const newScreenView = zoomOnPoint(
-            screenView,
-            touchCenter,
-            newScale
-          );
+          const newScreenView = zoomOnPoint(screenView, touchCenter, newScale);
 
           return translateCoordinateSystem(newScreenView, moveCSStep);
         });
@@ -160,18 +137,14 @@ const Board = ({
     const velocityFactor = 0.3;
     const newCenterVelocity: [number, number] = [
       ptClient[0] > windowW2 * windowMoveThreshold
-        ? velocityFactor *
-          (ptClient[0] - windowW2 * windowMoveThreshold)
+        ? velocityFactor * (ptClient[0] - windowW2 * windowMoveThreshold)
         : ptClient[0] < -windowW2 * windowMoveThreshold
-        ? velocityFactor *
-          (ptClient[0] + windowW2 * windowMoveThreshold)
+        ? velocityFactor * (ptClient[0] + windowW2 * windowMoveThreshold)
         : 0,
       ptClient[1] > windowH2 * windowMoveThreshold
-        ? velocityFactor *
-          (ptClient[1] - windowH2 * windowMoveThreshold)
+        ? velocityFactor * (ptClient[1] - windowH2 * windowMoveThreshold)
         : ptClient[1] < -windowH2 * windowMoveThreshold
-        ? velocityFactor *
-          (ptClient[1] + windowH2 * windowMoveThreshold)
+        ? velocityFactor * (ptClient[1] + windowH2 * windowMoveThreshold)
         : 0,
     ];
     setCenterVelocity(newCenterVelocity);
@@ -180,16 +153,16 @@ const Board = ({
   function forwardTouchStartToElements(touch: Touch) {
     const elem = document
       .elementsFromPoint(touch.clientX, touch.clientY)
-      .find((elem) => elem.classList.contains('board-element'));
+      .find((elem) => elem.classList.contains("board-element"));
     if (elem !== currentActiveElement) {
       if (currentActiveElement) {
-        const event = new Event('board-element:deactivate');
+        const event = new Event("board-element:deactivate");
         currentActiveElement?.dispatchEvent(event);
       } else {
         onStartSelection?.();
       }
       setCurrentActiveElement(elem);
-      const event = new Event('board-element:activate');
+      const event = new Event("board-element:activate");
       elem?.dispatchEvent(event);
     }
   }
@@ -197,16 +170,16 @@ const Board = ({
   function forwardTouchMoveToElements(touch: Touch) {
     const elem = document
       .elementsFromPoint(touch.clientX, touch.clientY)
-      .find((elem) => elem.classList.contains('board-element'));
+      .find((elem) => elem.classList.contains("board-element"));
     if (elem !== currentActiveElement) {
       if (currentActiveElement) {
-        const event = new Event('board-element:deactivate');
+        const event = new Event("board-element:deactivate");
         currentActiveElement?.dispatchEvent(event);
       }
       setCurrentActiveElement(elem);
-      const event = new Event('board-element:activate', {
+      const event = new Event("board-element:activate", {
         // @ts-ignore
-        detail: 'data',
+        detail: "data",
       });
       elem?.dispatchEvent(event);
     }
@@ -268,7 +241,7 @@ const Board = ({
 
   function triggerCurrentElement() {
     if (currentActiveElement) {
-      const event = new Event('board-element:trigger');
+      const event = new Event("board-element:trigger");
       currentActiveElement?.dispatchEvent(event);
       setCurrentActiveElement(null);
     } else {
@@ -278,7 +251,7 @@ const Board = ({
 
   function deactivateCurrentElement() {
     if (currentActiveElement) {
-      const event = new Event('board-element:deactivate');
+      const event = new Event("board-element:deactivate");
       currentActiveElement?.dispatchEvent(event);
       setCurrentActiveElement(null);
     }
@@ -296,10 +269,7 @@ const Board = ({
     setTouchIdentifier(touch.identifier);
 
     forwardTouchStartToElements(touch);
-    startTouchZoom([
-      touch.clientX - windowW2,
-      touch.clientY - windowH2,
-    ]);
+    startTouchZoom([touch.clientX - windowW2, touch.clientY - windowH2]);
   }
 
   function onTouchMove(e: TouchEvent) {
@@ -310,10 +280,7 @@ const Board = ({
 
     forwardTouchMoveToElements(touch);
 
-    moveTouchPoint([
-      touch.clientX - windowW2,
-      touch.clientY - windowH2,
-    ]);
+    moveTouchPoint([touch.clientX - windowW2, touch.clientY - windowH2]);
   }
 
   function onTouchEnd(e: TouchEvent) {
@@ -354,10 +321,10 @@ const Board = ({
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'stretch',
-        position: 'absolute',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "stretch",
+        position: "absolute",
         top: 0,
         left: 0,
         bottom: 0,
@@ -400,17 +367,14 @@ const Board = ({
             }) translate(${-screenView[0]}px, ${-screenView[1]}px)`,
           }}
         >
-          <BoardCircleElement
-            radius={181.5}
-            color={newColor(0, 0, 0, 1)}
-          />
+          <BoardCircleElement radius={181.5} color={newColor(0, 0, 0, 1)} />
           <BoardCircleElement
             radius={181.5}
             color={newColor(0, 0, 0, 1)}
             overlayColor={overlayColors?.[0]?.none}
-            onActivate={() => activateElement?.(0, 'none')}
-            onDeactivate={() => deactivateElement?.(0, 'none')}
-            onTrigger={() => triggerElement?.(0, 'none')}
+            onActivate={() => activateElement?.(0, "none")}
+            onDeactivate={() => deactivateElement?.(0, "none")}
+            onTrigger={() => triggerElement?.(0, "none")}
           />
           {boardSliceNumbers.map((number, inx) => (
             <BoardSlice
@@ -436,19 +400,16 @@ const Board = ({
       </svg>
       <div
         style={{
-          display: showBigHit ? 'block' : 'none',
-          position: 'absolute',
-          top: '44%',
-          left: '50%',
-          marginLeft: '-84px',
-          marginTop: '-52px',
+          display: showBigHit ? "block" : "none",
+          position: "absolute",
+          top: "44%",
+          left: "50%",
+          marginLeft: "-84px",
+          marginTop: "-52px",
         }}
       >
         <DartScoreLabel
-          hit={
-            showBigHit ||
-            ({ number: 0, slicePart: 'none' } as DartHit)
-          }
+          hit={showBigHit || ({ number: 0, slicePart: "none" } as DartHit)}
           big
           shadow={showBigHit?.isShadow}
         />

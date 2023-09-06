@@ -1,10 +1,12 @@
-import { useContext, useEffect } from 'react';
-import { MenuButton } from '../components/ui/MenuButton';
-import { MenuHeader } from '../components/ui/MenuHeader';
-import Modal from '../components/ui/Modal';
-import { AppContext } from '../state/AppState';
-import { observer } from 'mobx-react-lite';
-import { X01GameState } from '../game/x01/X01GameState';
+import { useContext, useEffect } from "react";
+import { MenuButton } from "../components/ui/MenuButton";
+import { MenuHeader } from "../components/ui/MenuHeader";
+import Modal from "../components/ui/Modal";
+import { AppContext } from "../state/AppState";
+import { observer } from "mobx-react-lite";
+import { X01GameState } from "../game/x01/X01GameState";
+
+import dart_logo from "../assets/icons/for_free_family/dart_red_100.svg";
 
 export type StartGameScreenProps = {
   onClose?: () => void;
@@ -16,7 +18,11 @@ export const StartGameScreen = observer(
     const appState = useContext(AppContext);
 
     function startX01() {
-      appState.screen.changeRoute('playerselect');
+      appState.screen.changeRoute("playerselect");
+    }
+
+    function toPlayerCards() {
+      appState.screen.changeRoute("playercards");
     }
 
     /*
@@ -40,9 +46,16 @@ export const StartGameScreen = observer(
 
     return (
       <Modal hideClose>
-        <MenuHeader>Start new game</MenuHeader>
-        <MenuButton onClick={startX01}>301 / 501 / 701</MenuButton>
-        <MenuButton disabled>Around the Clock</MenuButton>
+        <MenuButton onClick={toPlayerCards} size="large">
+          Playercards
+        </MenuButton>
+        <div className="h-0.5 rounded-full bg-grey-400" />
+        <MenuButton onClick={startX01} size="large">
+          301 / 501 / 701
+        </MenuButton>
+        <MenuButton disabled size="large">
+          Around the Clock
+        </MenuButton>
       </Modal>
     );
   }
